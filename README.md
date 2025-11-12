@@ -2,7 +2,7 @@
 
 ## 📘 Descrição
 O projeto **Impressora** tem como objetivo criar uma aplicação para **gerenciar e enviar trabalhos de impressão** diretamente a impressoras conectadas ao sistema, simulando ou controlando dispositivos de saída reais.  
-Desenvolvido por **Kauá (Ka1ux)**, o projeto foi criado para fins de **aprendizado, automação e integração com hardware** dentro do contexto de estudos de Engenharia da Computação.
+O projeto foi criado para fins de **aprendizado, automação e integração com hardware** dentro do contexto de estudos de Engenharia da Computação.
 
 ---
 
