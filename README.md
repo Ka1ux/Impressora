@@ -130,23 +130,16 @@ gcc tests/test_printer.c -o test_printer.exe
 ```
 
 ---
-- GitHub: [Ka1ux](https://github.com/Ka1ux)
+## Pessoas
+- Kaua Barroso
+- Erick Maycon
+- Rafael Fróes
+- 00000000
+- Jhonata
 ---
 
 ## 📝 Licença
 Este projeto é distribuído sob a licença **MIT License** — veja o arquivo `LICENSE` para mais detalhes.
-
----
-
-## ⭐ Contribuições
-Contribuições são sempre bem-vindas!  
-Siga os passos abaixo:
-
-1. Faça um fork do projeto  
-2. Crie uma branch: `git checkout -b feature/nova-funcionalidade`  
-3. Commit suas alterações: `git commit -m "Adiciona nova funcionalidade"`  
-4. Envie o push: `git push origin feature/nova-funcionalidade`  
-5. Abra um **Pull Request**
 
 ---
 
@@ -156,7 +149,7 @@ Siga os passos abaixo:
 - [ ] Logs mais detalhados com data/hora  
 - [ ] Suporte a múltiplas impressoras  
 - [ ] Modo de simulação (sem impressão real)
-
+      
 ---
 
 ## 📚 Referências
