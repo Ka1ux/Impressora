@@ -3,13 +3,18 @@
 #include <string.h>
 #include <windows.h>
 
+// Handle global para a DLL da impressora Elgin
+// Armazena a referência da biblioteca carregada dinamicamente
 static HMODULE g_hDll = NULL;
 
+// Define a convenção de chamada para funções da DLL
+// WINAPI garante compatibilidade com funções exportadas da DLL
 #ifndef CALLCONV
 #define CALLCONV WINAPI
 #endif
 
-// Tipos de função da DLL
+// Definição dos tipos de função da DLL E1_Impressora01.dll
+// Cada typedef define a assinatura de uma função exportada pela DLL
 typedef int (CALLCONV *AbreConexaoImpressora_t)(int, const char *, const char *, int);
 typedef int (CALLCONV *FechaConexaoImpressora_t)(void);
 typedef int (CALLCONV *ImpressaoTexto_t)(const char *, int, int, int);
@@ -24,7 +29,9 @@ typedef int (CALLCONV *ImprimeXMLSAT_t)(const char *, int);
 typedef int (CALLCONV *ImprimeXMLCancelamentoSAT_t)(const char *, const char *, int);
 typedef int (CALLCONV *InicializaImpressora_t)(void);
 
-// Ponteiros para funções
+// Ponteiros para funções da DLL
+// Inicializados como NULL e preenchidos após carregar a DLL
+// Permitem chamar as funções da DLL de forma dinâmica
 static AbreConexaoImpressora_t AbreConexaoImpressora = NULL;
 static FechaConexaoImpressora_t FechaConexaoImpressora = NULL;
 static ImpressaoTexto_t ImpressaoTexto = NULL;
@@ -39,14 +46,17 @@ static ImprimeXMLSAT_t ImprimeXMLSAT = NULL;
 static ImprimeXMLCancelamentoSAT_t ImprimeXMLCancelamentoSAT = NULL;
 static InicializaImpressora_t InicializaImpressora = NULL;
 
-// Configurações
-static int g_tipo = 1;
-static char g_modelo[64] = "i9";
-static char g_conexao[128] = "USB";
-static int g_parametro = 0;
-static int g_conectada = 0;
+// Variáveis globais de configuração da impressora
+static int g_tipo = 1;                    // Tipo de conexão: 1=USB, 2=Serial
+static char g_modelo[64] = "i9";          // Modelo da impressora (ex: i9, i7, etc)
+static char g_conexao[128] = "USB";       // String de conexão (USB, COM1, etc)
+static int g_parametro = 0;               // Parâmetro adicional para conexão
+static int g_conectada = 0;               // Flag: 1=conectada, 0=desconectada
 
-// Macro para carregar função
+// Macro para carregar uma função da DLL dinamicamente
+// h: handle da DLL carregada
+// name: nome da função a ser carregada
+// Usa GetProcAddress para obter o endereço da função exportada
 #define LOAD_FN(h, name) \
     do { \
         name = (name##_t)GetProcAddress((HMODULE)(h), #name); \
@@ -56,18 +66,25 @@ static int g_conectada = 0;
         } \
     } while (0)
 
-// Funções auxiliares
+// Funções auxiliares para manipulação de entrada do usuário
+
+// Limpa o buffer de entrada após scanf
+// Remove caracteres restantes (incluindo '\n') até encontrar quebra de linha ou EOF
 static void flush_entrada(void) {
     int c;
     while ((c = getchar()) != '\n' && c != EOF);
 }
 
+// Remove o caractere de quebra de linha do final de uma string
+// Útil após usar fgets() que inclui '\n' na string lida
 static void remover_quebra_linha(char *str) {
     int len = strlen(str);
     if (len > 0 && str[len-1] == '\n') str[len-1] = '\0';
 }
 
-// Verifica se está conectado
+// Verifica se a impressora está conectada antes de executar operações
+// Retorna: 1 se conectada, 0 se não conectada
+// Exibe mensagem de erro se não estiver conectada
 static int verificar_conexao(void) {
     if (!g_conectada) {
         printf("Erro: Abra a conexao primeiro!\n");
@@ -76,15 +93,21 @@ static int verificar_conexao(void) {
     return 1;
 }
 
-// Finaliza impressão (avança papel e corta)
+// Finaliza a impressão avançando o papel e cortando
+// Avança 1 linha de papel (economiza papel comparado a valores maiores)
+// Realiza corte parcial (0) após avançar o papel
+// Chamada automaticamente após cada operação de impressão
 static void finalizar_impressao(void) {
     if (AvancaPapel && Corte) {
-        AvancaPapel(10);
-        Corte(0);
+        AvancaPapel(1);  // Avança 1 linha (economia de papel)
+        Corte(0);        // Corte parcial
     }
 }
 
-// Carrega DLL
+// Carrega a DLL da impressora e todas as funções necessárias
+// Retorna: 1 se sucesso, 0 se falha
+// Carrega dinamicamente a biblioteca E1_Impressora01.dll e resolve os endereços
+// de todas as funções exportadas necessárias para o funcionamento do sistema
 static int carregarFuncoes(void) {
     g_hDll = LoadLibraryA("E1_Impressora01.dll");
     if (!g_hDll) {
@@ -108,6 +131,9 @@ static int carregarFuncoes(void) {
     return 1;
 }
 
+// Libera a DLL da memória antes de encerrar o programa
+// Descarrega a biblioteca usando FreeLibrary e reseta o handle
+// Importante para evitar vazamentos de memória
 static void liberarBiblioteca(void) {
     if (g_hDll) {
         FreeLibrary(g_hDll);
@@ -115,7 +141,8 @@ static void liberarBiblioteca(void) {
     }
 }
 
-// Menu
+// Exibe o menu principal do sistema com todas as opções disponíveis
+// Menu interativo que permite ao usuário escolher as operações a realizar
 static void exibirMenu(void) {
     printf("\n========== MENU ==========\n");
     printf("1. Configurar Conexao\n");
@@ -129,13 +156,14 @@ static void exibirMenu(void) {
     printf("9. Abrir Gaveta Elgin\n");
     printf("10. Abrir Gaveta\n");
     printf("11. Emitir Sinal Sonoro\n");
-    printf("12. Inicializar Impressora\n");
     printf("0. Sair\n");
     printf("========================\n");
     printf("Opcao: ");
 }
 
-// Configura conexão
+// Configura os parâmetros de conexão da impressora
+// Solicita ao usuário: tipo de conexão, modelo, string de conexão e parâmetro adicional
+// As configurações são armazenadas nas variáveis globais para uso posterior
 static void configurarConexao(void) {
     printf("\n=== Configuracao ===\n");
     printf("Tipo (1=USB, 2=Serial): ");
@@ -155,7 +183,10 @@ static void configurarConexao(void) {
     printf("Configuracao salva!\n");
 }
 
-// Abre conexão
+// Abre a conexão com a impressora usando as configurações definidas
+// Verifica se já está conectada antes de tentar abrir novamente
+// Retorno 0 indica sucesso, outros valores indicam erro
+// Atualiza a flag g_conectada para indicar o estado da conexão
 static void abrirConexao(void) {
     if (g_conectada) {
         printf("Conexao ja esta aberta!\n");
@@ -171,7 +202,10 @@ static void abrirConexao(void) {
     }
 }
 
-// Fecha conexão
+// Fecha a conexão com a impressora
+// Verifica se há conexão aberta antes de tentar fechar
+// Retorno 0 indica sucesso, outros valores indicam erro
+// Atualiza a flag g_conectada para 0 após fechar com sucesso
 static void fecharConexao(void) {
     if (!g_conectada) {
         printf("Nenhuma conexao aberta!\n");
@@ -187,7 +221,10 @@ static void fecharConexao(void) {
     }
 }
 
-// Imprime texto
+// Imprime um texto simples na impressora
+// Solicita o texto ao usuário (até 512 caracteres)
+// Parâmetros da impressão: texto, alinhamento(0), estilo(0), tamanho(0)
+// Após imprimir, finaliza com avanço de papel e corte
 static void imprimirTexto(void) {
     if (!verificar_conexao()) return;
     
@@ -205,7 +242,10 @@ static void imprimirTexto(void) {
     }
 }
 
-// Imprime QR Code
+// Imprime um QR Code na impressora
+// Solicita o conteúdo do QR Code ao usuário (até 256 caracteres)
+// Parâmetros: texto do QR Code, tamanho(6), correção de erro(4)
+// Após imprimir, finaliza com avanço de papel e corte
 static void imprimirQRCode(void) {
     if (!verificar_conexao()) return;
     
@@ -223,7 +263,10 @@ static void imprimirQRCode(void) {
     }
 }
 
-// Imprime código de barras
+// Imprime um código de barras na impressora
+// Usa código de exemplo fixo: tipo(8), código("{A012345678912"), altura(100), largura(2), posição(3)
+// Parâmetros: tipo de código, string do código, altura em pontos, largura, posição do texto
+// Após imprimir, finaliza com avanço de papel e corte
 static void imprimirCodigoBarras(void) {
     if (!verificar_conexao()) return;
     
@@ -236,7 +279,10 @@ static void imprimirCodigoBarras(void) {
     }
 }
 
-// Lê arquivo XML
+// Lê o conteúdo completo de um arquivo XML para memória
+// Parâmetro: nome do arquivo a ser lido
+// Retorna: ponteiro para string alocada dinamicamente com o conteúdo, ou NULL se erro
+// O buffer retornado deve ser liberado com free() após o uso
 static char* ler_arquivo(const char *nome) {
     FILE *f = fopen(nome, "r");
     if (!f) return NULL;
@@ -254,7 +300,11 @@ static char* ler_arquivo(const char *nome) {
     return buf;
 }
 
-// Imprime XML SAT
+// Imprime um cupom fiscal SAT (Sistema Autenticador e Transmissor) a partir de arquivo XML
+// Lê o arquivo XMLSAT.xml do diretório atual
+// O XML contém os dados do cupom fiscal que será impresso
+// Após imprimir, finaliza com avanço de papel e corte
+// Libera a memória alocada para o conteúdo do arquivo
 static void imprimirXMLSAT(void) {
     if (!verificar_conexao()) return;
     
@@ -275,7 +325,12 @@ static void imprimirXMLSAT(void) {
     }
 }
 
-// Imprime XML Cancelamento SAT
+// Imprime um cupom de cancelamento SAT a partir de arquivo XML
+// Lê o arquivo CANC_SAT.xml do diretório atual
+// Requer uma assinatura digital para autenticar o cancelamento
+// A assinatura é fornecida como string codificada em Base64
+// Após imprimir, finaliza com avanço de papel e corte
+// Libera a memória alocada para o conteúdo do arquivo
 static void imprimirXMLCancelamentoSAT(void) {
     if (!verificar_conexao()) return;
     
@@ -298,7 +353,9 @@ static void imprimirXMLCancelamentoSAT(void) {
     }
 }
 
-// Abre gaveta Elgin
+// Abre a gaveta de dinheiro da impressora Elgin
+// Parâmetros: índice da gaveta(1), tempo de abertura em ms(50), tempo de fechamento em ms(50)
+// Usado para abrir a gaveta de dinheiro acoplada à impressora
 static void abrirGavetaElginOpc(void) {
     if (!verificar_conexao()) return;
     
@@ -306,7 +363,9 @@ static void abrirGavetaElginOpc(void) {
     printf(ret == 0 ? "Gaveta aberta!\n" : "Erro (codigo: %d)\n", ret);
 }
 
-// Abre gaveta genérica
+// Abre a gaveta de dinheiro genérica (compatível com vários modelos)
+// Parâmetros: índice da gaveta(1), tempo de abertura em ms(5), tempo de fechamento em ms(10)
+// Função alternativa para modelos que não suportam AbreGavetaElgin
 static void abrirGavetaOpc(void) {
     if (!verificar_conexao()) return;
     
@@ -314,7 +373,9 @@ static void abrirGavetaOpc(void) {
     printf(ret == 0 ? "Gaveta aberta!\n" : "Erro (codigo: %d)\n", ret);
 }
 
-// Emite sinal sonoro
+// Emite um sinal sonoro (bip) na impressora
+// Parâmetros: quantidade de bips(4), intervalo entre bips em ms(50), duração de cada bip em ms(5)
+// Útil para alertas ou confirmações sonoras
 static void emitirSinalSonoro(void) {
     if (!verificar_conexao()) return;
     
@@ -322,7 +383,25 @@ static void emitirSinalSonoro(void) {
     printf(ret == 0 ? "Sinal emitido!\n" : "Erro (codigo: %d)\n", ret);
 }
 
-// Main
+// Reseta o arquivo de logs do sistema
+// Abre o arquivo log.txt em modo escrita ("w") para limpar seu conteúdo
+// Se o arquivo não existir, será criado vazio
+// Usado para limpar logs antigos e iniciar um novo registro
+static void resetarLogs(void) {
+    FILE *f = fopen("log.txt", "w");
+    if (f) {
+        fclose(f);
+        printf("Logs resetados!\n");
+    } else {
+        printf("Erro ao resetar logs!\n");
+    }
+}
+
+// Função principal do programa
+// Inicializa o sistema carregando a DLL da impressora
+// Executa um loop infinito exibindo o menu e processando as opções do usuário
+// Case 2 e 0: resetam logs, fecham conexão (se aberta) e encerram o programa
+// Retorna 1 se falhar ao carregar a DLL, 0 ao encerrar normalmente
 int main(void) {
     if (!carregarFuncoes()) return 1;
 
@@ -334,7 +413,12 @@ int main(void) {
         
         switch (opcao) {
             case 1: configurarConexao(); break;
-            case 2: abrirConexao(); break;
+            case 2:
+                // Opção 2: Resetar logs, fechar conexão e sair
+                resetarLogs();
+                if (g_conectada) fecharConexao();
+                liberarBiblioteca();
+                return 0;
             case 3: fecharConexao(); break;
             case 4: imprimirTexto(); break;
             case 5: imprimirQRCode(); break;
@@ -344,13 +428,9 @@ int main(void) {
             case 9: abrirGavetaElginOpc(); break;
             case 10: abrirGavetaOpc(); break;
             case 11: emitirSinalSonoro(); break;
-            case 12:
-                if (InicializaImpressora) {
-                    int ret = InicializaImpressora();
-                    printf(ret == 0 ? "Impressora inicializada!\n" : "Erro (codigo: %d)\n", ret);
-                }
-                break;
             case 0:
+                // Opção 0: Resetar logs, fechar conexão e sair
+                resetarLogs();
                 if (g_conectada) fecharConexao();
                 liberarBiblioteca();
                 return 0;
