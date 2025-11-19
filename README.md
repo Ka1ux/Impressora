@@ -134,8 +134,8 @@ gcc tests/test_printer.c -o test_printer.exe
 - Kaua Barroso
 - Erick Maycon
 - Rafael Fróes
-- 00000000
-- Jhonata
+- Matheus Derllova
+- Jhonata Lion
 ---
 
 ## 📝 Licença
