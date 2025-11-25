@@ -1,3 +1,5 @@
+// ===== PARTE 1 - Contexto e infraestrutura (Pessoa 1) =====
+// Objetivo na apresentação: explicar por que precisamos desses elementos antes de falar das funções.
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -53,6 +55,9 @@ static char g_conexao[128] = "USB";       // String de conexão (USB, COM1, etc)
 static int g_parametro = 0;               // Parâmetro adicional para conexão
 static int g_conectada = 0;               // Flag: 1=conectada, 0=desconectada
 
+// ===== PARTE 2 - Carregamento dinâmico e utilidades (Pessoa 2) =====
+// Objetivo na apresentação: mostrar como garantimos que a DLL esteja pronta e o estado limpo.
+
 // Macro para carregar uma função da DLL dinamicamente
 // h: handle da DLL carregada
 // name: nome da função a ser carregada
@@ -99,7 +104,7 @@ static int verificar_conexao(void) {
 // Chamada automaticamente após cada operação de impressão
 static void finalizar_impressao(void) {
     if (AvancaPapel && Corte) {
-        AvancaPapel(1);  // Avança 1 linha (economia de papel)
+        AvancaPapel(3);  // Avança 1 linha (economia de papel)
         Corte(0);        // Corte parcial
     }
 }
@@ -141,21 +146,22 @@ static void liberarBiblioteca(void) {
     }
 }
 
+// ===== PARTE 3 - Menu e gerenciamento de conexão (Pessoa 3) =====
+// Objetivo na apresentação: guiar o público pelo fluxo de uso antes das impressões.
 // Exibe o menu principal do sistema com todas as opções disponíveis
 // Menu interativo que permite ao usuário escolher as operações a realizar
 static void exibirMenu(void) {
     printf("\n========== MENU ==========\n");
     printf("1. Configurar Conexao\n");
     printf("2. Abrir Conexao\n");
-    printf("3. Fechar Conexao\n");
-    printf("4. Imprimir Texto\n");
-    printf("5. Imprimir QR Code\n");
-    printf("6. Imprimir Codigo de Barras\n");
-    printf("7. Imprimir XML SAT\n");
-    printf("8. Imprimir XML Cancelamento SAT\n");
-    printf("9. Abrir Gaveta Elgin\n");
-    printf("10. Abrir Gaveta\n");
-    printf("11. Emitir Sinal Sonoro\n");
+    printf("3. Imprimir Texto\n");
+    printf("4. Imprimir QR Code\n");
+    printf("5. Imprimir Codigo de Barras\n");
+    printf("6. Imprimir XML SAT\n");
+    printf("7. Imprimir XML Cancelamento SAT\n");
+    printf("8. Abrir Gaveta Elgin\n");
+    printf("9. Abrir Gaveta\n");
+    printf("10. Emitir Sinal Sonoro\n");
     printf("0. Sair\n");
     printf("========================\n");
     printf("Opcao: ");
@@ -221,6 +227,8 @@ static void fecharConexao(void) {
     }
 }
 
+// ===== PARTE 4 - Rotinas de impressão (Pessoa 4) =====
+// Objetivo na apresentação: detalhar como cada tipo de impressão é disparado e finalizado.
 // Imprime um texto simples na impressora
 // Solicita o texto ao usuário (até 512 caracteres)
 // Parâmetros da impressão: texto, alinhamento(0), estilo(0), tamanho(0)
@@ -353,6 +361,8 @@ static void imprimirXMLCancelamentoSAT(void) {
     }
 }
 
+// ===== PARTE 5 - Acessórios, reset e loop principal (Pessoa 5) =====
+// Objetivo na apresentação: concluir mostrando os controles auxiliares e o encerramento seguro.
 // Abre a gaveta de dinheiro da impressora Elgin
 // Parâmetros: índice da gaveta(1), tempo de abertura em ms(50), tempo de fechamento em ms(50)
 // Usado para abrir a gaveta de dinheiro acoplada à impressora
@@ -383,24 +393,30 @@ static void emitirSinalSonoro(void) {
     printf(ret == 0 ? "Sinal emitido!\n" : "Erro (codigo: %d)\n", ret);
 }
 
-// Reseta o arquivo de logs do sistema
-// Abre o arquivo log.txt em modo escrita ("w") para limpar seu conteúdo
-// Se o arquivo não existir, será criado vazio
-// Usado para limpar logs antigos e iniciar um novo registro
-static void resetarLogs(void) {
-    FILE *f = fopen("log.txt", "w");
-    if (f) {
-        fclose(f);
-        printf("Logs resetados!\n");
+// Reseta o buffer interno da impressora
+// Utiliza a função InicializaImpressora da DLL para limpar o spool/buffer
+// Só pode ser executado com a impressora conectada
+// Útil quando o equipamento fica travado ou acumulando comandos
+static void resetarBuffer(void) {
+    if (!verificar_conexao()) return;
+
+    if (!InicializaImpressora) {
+        printf("Funcao de reset nao disponivel!\n");
+        return;
+    }
+
+    int ret = InicializaImpressora();
+    if (ret == 0) {
+        printf("Buffer da impressora resetado!\n");
     } else {
-        printf("Erro ao resetar logs!\n");
+        printf("Erro ao resetar buffer (codigo: %d)\n", ret);
     }
 }
 
 // Função principal do programa
 // Inicializa o sistema carregando a DLL da impressora
 // Executa um loop infinito exibindo o menu e processando as opções do usuário
-// Case 2 e 0: resetam logs, fecham conexão (se aberta) e encerram o programa
+// Case 2 abre conexão; case 0 reseta buffer, fecha conexão (se aberta) e encerra
 // Retorna 1 se falhar ao carregar a DLL, 0 ao encerrar normalmente
 int main(void) {
     if (!carregarFuncoes()) return 1;
@@ -413,25 +429,21 @@ int main(void) {
         
         switch (opcao) {
             case 1: configurarConexao(); break;
-            case 2:
-                // Opção 2: Resetar logs, fechar conexão e sair
-                resetarLogs();
-                if (g_conectada) fecharConexao();
-                liberarBiblioteca();
-                return 0;
-            case 3: fecharConexao(); break;
-            case 4: imprimirTexto(); break;
-            case 5: imprimirQRCode(); break;
-            case 6: imprimirCodigoBarras(); break;
-            case 7: imprimirXMLSAT(); break;
-            case 8: imprimirXMLCancelamentoSAT(); break;
-            case 9: abrirGavetaElginOpc(); break;
-            case 10: abrirGavetaOpc(); break;
-            case 11: emitirSinalSonoro(); break;
+            case 2: abrirConexao(); break;
+            case 3: imprimirTexto(); break;
+            case 4: imprimirQRCode(); break;
+            case 5: imprimirCodigoBarras(); break;
+            case 6: imprimirXMLSAT(); break;
+            case 7: imprimirXMLCancelamentoSAT(); break;
+            case 8: abrirGavetaElginOpc(); break;
+            case 9: abrirGavetaOpc(); break;
+            case 10: emitirSinalSonoro(); break;
             case 0:
-                // Opção 0: Resetar logs, fechar conexão e sair
-                resetarLogs();
-                if (g_conectada) fecharConexao();
+                // Opção 0: Resetar buffer, fechar conexão e sair
+                if (g_conectada) {
+                    resetarBuffer();
+                    fecharConexao();
+                }
                 liberarBiblioteca();
                 return 0;
             default: printf("Opcao invalida!\n"); break;
