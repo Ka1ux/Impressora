@@ -1,5 +1,4 @@
 // ===== PARTE 1 - Contexto e infraestrutura (Pessoa 1) =====
-// Objetivo na apresentação: explicar por que precisamos desses elementos antes de falar das funções.
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -56,7 +55,6 @@ static int g_parametro = 0;               // Parâmetro adicional para conexão
 static int g_conectada = 0;               // Flag: 1=conectada, 0=desconectada
 
 // ===== PARTE 2 - Carregamento dinâmico e utilidades (Pessoa 2) =====
-// Objetivo na apresentação: mostrar como garantimos que a DLL esteja pronta e o estado limpo.
 
 // Macro para carregar uma função da DLL dinamicamente
 // h: handle da DLL carregada
@@ -147,7 +145,7 @@ static void liberarBiblioteca(void) {
 }
 
 // ===== PARTE 3 - Menu e gerenciamento de conexão (Pessoa 3) =====
-// Objetivo na apresentação: guiar o público pelo fluxo de uso antes das impressões.
+
 // Exibe o menu principal do sistema com todas as opções disponíveis
 // Menu interativo que permite ao usuário escolher as operações a realizar
 static void exibirMenu(void) {
@@ -228,7 +226,7 @@ static void fecharConexao(void) {
 }
 
 // ===== PARTE 4 - Rotinas de impressão (Pessoa 4) =====
-// Objetivo na apresentação: detalhar como cada tipo de impressão é disparado e finalizado.
+
 // Imprime um texto simples na impressora
 // Solicita o texto ao usuário (até 512 caracteres)
 // Parâmetros da impressão: texto, alinhamento(0), estilo(0), tamanho(0)
@@ -362,7 +360,7 @@ static void imprimirXMLCancelamentoSAT(void) {
 }
 
 // ===== PARTE 5 - Acessórios, reset e loop principal (Pessoa 5) =====
-// Objetivo na apresentação: concluir mostrando os controles auxiliares e o encerramento seguro.
+
 // Abre a gaveta de dinheiro da impressora Elgin
 // Parâmetros: índice da gaveta(1), tempo de abertura em ms(50), tempo de fechamento em ms(50)
 // Usado para abrir a gaveta de dinheiro acoplada à impressora
@@ -450,4 +448,5 @@ int main(void) {
         }
     }
 }
+
 
