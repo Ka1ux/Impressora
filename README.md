@@ -97,20 +97,6 @@ Aqui estão as únicas configurações necessárias:
 ### 🔌Porta da Impressora
 Você precisa indicar o nome da impressora instalada no Windows (como aparece no Painel de Controle).
 ```
-
----
-
-## 🧪 Testes
-Para rodar testes unitários:
-```bash
-make test
-```
-Ou compile manualmente:
-```bash
-gcc tests/test_printer.c -o test_printer.exe
-./test_printer.exe
-```
-
 ---
 ## Pessoas
 - Kaua Barroso
