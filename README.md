@@ -92,8 +92,6 @@ Todas as configurações do projeto são feitas **dentro do código**, e não at
 
 Aqui estão as únicas configurações necessárias:
 
----
-
 ### 🔌Porta da Impressora
 ```
 Você precisa indicar o nome da impressora instalada no Windows (como aparece no Painel de Controle).
