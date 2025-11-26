@@ -7,12 +7,18 @@ O projeto foi criado para fins de **aprendizado, automação e integração com 
 ---
 
 ## ⚙️ Funcionalidades Principais
-- 🖨️ Envio de texto e documentos para impressão.  
-- 📂 Leitura e processamento de arquivos (TXT, PDF, IMG, etc).  
-- 🧩 Seleção de impressora instalada no sistema.  
-- 🧾 Configuração de layout, margens e formato de página.  
-- 💾 Registro de logs de impressões realizadas.  
-- 🔌 Comunicação direta com portas USB, LPT ou rede.  
+
+🖨️ **Impressão de texto**  
+Envio de texto simples diretamente para a impressora Elgin Bematech i9 usando comandos ESC/POS.
+
+🔢 **Impressão de código de barras**  
+Suporte para impressão de código de barras nos padrões aceitos pela impressora i9 (via comandos ESC/POS).
+
+🔳 **Impressão de QR Code**  
+Geração e envio de QR Code diretamente para a impressora, utilizando os comandos específicos da i9.
+
+🔌 **Comunicação direta com a impressora**  
+Envio de dados RAW diretamente pela porta configurada no Windows (USB, COM ou porta padrão da i9).
 
 ---
 
@@ -35,32 +41,6 @@ Foi uma oportunidade de estudar:
 | Bibliotecas | `windows.h`, `winspool.drv` |
 | Controle de versão | Git + GitHub |
 | Documentação | Markdown (`README.md`) |
-
----
-
-## 📂 Estrutura do Projeto
-```
-Impressora/
-├── src/                    # Código-fonte principal
-│   ├── main.c              # Ponto de entrada
-│   ├── printer.c           # Funções de comunicação com impressora
-│   ├── layout.c            # Gerenciamento de layout e formatação
-│   └── utils.c             # Funções auxiliares
-│
-├── include/                # Arquivos de cabeçalho (.h)
-│   ├── printer.h
-│   ├── layout.h
-│   └── utils.h
-│
-├── docs/                   # Documentação técnica
-│   └── especificacao.md
-│
-├── tests/                  # Testes unitários
-│   └── test_printer.c
-│
-├── Makefile                # Script de compilação
-└── README.md               # Este arquivo
-```
 
 ---
 
@@ -106,14 +86,16 @@ Impressão concluída com sucesso!
 ---
 
 ## 🧩 Configuração
-Você pode personalizar parâmetros de impressão no arquivo `config.ini` (se existir).  
-Exemplo:
-```ini
-[printer]
-name = HP_LaserJet_1020
-orientation = portrait
-margins = 5
-copies = 2
+
+A impressora Elgin Bematech i9 trabalha com comandos ESC/POS.  
+Todas as configurações do projeto são feitas **dentro do código**, e não através de arquivos externos.
+
+Aqui estão as únicas configurações necessárias:
+
+---
+
+### 🔌Porta da Impressora
+Você precisa indicar o nome da impressora instalada no Windows (como aparece no Painel de Controle).
 ```
 
 ---
@@ -149,10 +131,3 @@ Este projeto é distribuído sob a licença **MIT License** — veja o arquivo `
 - [ ] Logs mais detalhados com data/hora  
 - [ ] Suporte a múltiplas impressoras  
 - [ ] Modo de simulação (sem impressão real)
-      
----
-
-## 📚 Referências
-- Documentação Microsoft WinAPI (Impressão): https://learn.microsoft.com/en-us/windows/win32/printdocs/
-- StackOverflow – tópicos sobre impressão em C  
-- Tutoriais sobre controle de impressoras com `winspool.drv`
